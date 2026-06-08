@@ -1,13 +1,15 @@
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require("@grpc/proto-loader");
+const path = require("path");
 
-const packageDefinition = protoLoader.loadSync("../proto/calculadora.proto");
+const packageDefinition = protoLoader.loadSync(path.join(__dirname, "../proto/calculadora.proto"));
 const proto = grpc.loadPackageDefinition(packageDefinition).calculadora;
 
 class CalculadoraProxy {
     constructor() {
+        const host = process.env.SERVER_HOST || "localhost";
         this.client = new proto.Calculadora(
-            "IP_SERVIDOR:50051",
+            `${host}:50051`,
             grpc.credentials.createInsecure()
         );
     }

@@ -3,7 +3,8 @@ const net = require("net");
 class ClienteRSI {
     send(objeto, metodo, params) {
         return new Promise((resolve, reject) => {
-            const socket = net.createConnection({ host: "IP_SERVIDOR", port: 50052 }, () => {
+            const host = process.env.SERVER_HOST || "localhost";
+            const socket = net.createConnection({ host, port: 50052 }, () => {
                 const mensaje = JSON.stringify({ objeto, metodo, params });
                 socket.write(mensaje);
             });
