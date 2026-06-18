@@ -1,6 +1,6 @@
-const net = require("net");
+import net from "net";
 
-class ClienteRSI {
+export default class ClienteRSI {
     send(objeto, metodo, params) {
         return new Promise((resolve, reject) => {
             const host = process.env.SERVER_HOST || "localhost";
@@ -22,5 +22,3 @@ class ClienteRSI {
         });
     }
 }
-
-module.exports = ClienteRSI;

@@ -1,11 +1,14 @@
-const grpc = require("@grpc/grpc-js");
-const protoLoader = require("@grpc/proto-loader");
-const path = require("path");
+import grpc from "@grpc/grpc-js";
+import protoLoader from "@grpc/proto-loader";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const packageDefinition = protoLoader.loadSync(path.join(__dirname, "../proto/calculadora.proto"));
 const proto = grpc.loadPackageDefinition(packageDefinition).calculadora;
 
-class CalculadoraProxy {
+export default class CalculadoraProxy {
     constructor() {
         const host = process.env.SERVER_HOST || "localhost";
         this.client = new proto.Calculadora(
@@ -50,5 +53,3 @@ class CalculadoraProxy {
         });
     }
 }
-
-module.exports = CalculadoraProxy;

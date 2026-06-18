@@ -1,4 +1,4 @@
-const CalculadoraProxy = require("./CalculadoraProxy");
+import CalculadoraProxy from "./CalculadoraProxy.js";
 
 async function main() {
     let cli = new CalculadoraProxy();

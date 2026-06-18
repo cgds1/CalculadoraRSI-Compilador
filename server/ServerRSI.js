@@ -1,8 +1,11 @@
-const grpc = require("@grpc/grpc-js");
-const protoLoader = require("@grpc/proto-loader");
-const path = require("path");
-const net = require("net");
-const Calculadora = require("./Calculadora");
+import grpc from "@grpc/grpc-js";
+import protoLoader from "@grpc/proto-loader";
+import path from "path";
+import net from "net";
+import { fileURLToPath } from "url";
+import Calculadora from "./Calculadora.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ─── gRPC ───────────────────────────────────────────
 const packageDefinition = protoLoader.loadSync(path.join(__dirname, "../proto/calculadora.proto"));
