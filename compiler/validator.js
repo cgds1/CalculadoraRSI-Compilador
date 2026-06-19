@@ -1,6 +1,6 @@
 /**
  * compiler/validator.js
- * Fase 03 — Semantic validator for DCL AST
+ * Validador semántico del AST de DCL.
  *
  * Usage: import { validate } from './validator.js';
  *        const { errors, warnings } = validate(ast);

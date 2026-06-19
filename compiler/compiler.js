@@ -1,6 +1,6 @@
 /**
  * compiler/compiler.js
- * Fase 04 — CLI orquestador del pipeline DCL
+ * CLI orquestador del pipeline DCL
  *
  * Uso:
  *   node compiler/compiler.js [archivo.dcl]
@@ -98,34 +98,23 @@ async function main() {
 
   const protocol = ast.protocol;
 
-  const grpcGenerators = [
-    ['./generator/proto.js',       'generateProto',      `${ast.name}.proto`],
-    ['./generator/grpcProxy.js',   'generateGrpcProxy',  'grpc_proxy.js'],
-    ['./generator/businessObj.js', 'generateBusinessObj', 'business_object.js'],
-    ['./generator/grpcClient.js',  'generateGrpcClient', 'grpc_client.js'],
-  ];
-
-  const socketGenerators = [
-    ['./generator/socketProxy.js',  'generateSocketProxy',  'socket_proxy.js'],
-    ['./generator/businessObj.js',  'generateBusinessObj',  'business_object.js'],
-    ['./generator/socketClient.js', 'generateSocketClient', 'socket_client.js'],
-  ];
+  // Generadores del compilador. Cada entrada: [módulo, export, archivo de salida].
+  const GEN = {
+    proto:       ['./generator/proto.js',       'generateProto',       'calculadora.proto'],
+    bo:          ['./generator/bo.js',          'generateBO',          'Calculadora.js'],
+    proxyGRPC:   ['./generator/proxyGRPC.js',   'generateProxyGRPC',   'CalculadoraProxyGRPC.js'],
+    proxySocket: ['./generator/proxySocket.js', 'generateProxySocket', 'CalculadoraProxySocket.js'],
+    client:      ['./generator/client.js',      'generateClient',      'ClienteCalculadora.js'],
+  };
 
   let selectedGenerators;
   if (protocol === 'grpc') {
-    selectedGenerators = grpcGenerators;
+    selectedGenerators = [GEN.proto, GEN.bo, GEN.proxyGRPC, GEN.client];
   } else if (protocol === 'socket') {
-    selectedGenerators = socketGenerators;
+    selectedGenerators = [GEN.bo, GEN.proxySocket, GEN.client];
   } else {
-    // 'both' — sin duplicados
-    const seen = new Set();
-    selectedGenerators = [];
-    for (const g of [...grpcGenerators, ...socketGenerators]) {
-      if (!seen.has(g[2])) {
-        seen.add(g[2]);
-        selectedGenerators.push(g);
-      }
-    }
+    // 'both' — los 5 artefactos
+    selectedGenerators = [GEN.proto, GEN.bo, GEN.proxyGRPC, GEN.proxySocket, GEN.client];
   }
 
   let generatorsRun = 0;
