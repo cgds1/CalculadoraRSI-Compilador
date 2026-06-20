@@ -4,7 +4,7 @@
  *
  * Uso:
  *   node compiler/compiler.js [archivo.dcl]
- *   npm run compile              → usa calculadora.dcl por defecto
+ *   npm run compile
  *   npm run compile mi_servicio.dcl
  */
 
@@ -96,15 +96,17 @@ async function main() {
     log('Directorio output/ creado');
   }
 
-  const protocol = ast.protocol;
+  const protocol   = ast.protocol;
+  const svcName    = ast.name.replace('Service', '').toLowerCase(); // e.g. 'calculadora'
+  const className  = ast.classes[0].name;                           // e.g. 'Calculadora'
 
   // Generadores del compilador. Cada entrada: [módulo, export, archivo de salida].
   const GEN = {
-    proto:       ['./generator/proto.js',       'generateProto',       'calculadora.proto'],
-    bo:          ['./generator/bo.js',          'generateBO',          'Calculadora.js'],
-    proxyGRPC:   ['./generator/proxyGRPC.js',   'generateProxyGRPC',   'CalculadoraProxyGRPC.js'],
-    proxySocket: ['./generator/proxySocket.js', 'generateProxySocket', 'CalculadoraProxySocket.js'],
-    client:      ['./generator/client.js',      'generateClient',      'ClienteCalculadora.js'],
+    proto:       ['./generator/proto.js',       'generateProto',       `${svcName}.proto`],
+    bo:          ['./generator/bo.js',          'generateBO',          `${className}.js`],
+    proxyGRPC:   ['./generator/proxyGRPC.js',   'generateProxyGRPC',   `${className}ProxyGRPC.js`],
+    proxySocket: ['./generator/proxySocket.js', 'generateProxySocket', `${className}ProxySocket.js`],
+    client:      ['./generator/client.js',      'generateClient',      `Cliente${className}.js`],
   };
 
   let selectedGenerators;
