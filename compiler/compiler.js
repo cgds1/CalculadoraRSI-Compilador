@@ -10,7 +10,7 @@
 
 import fs   from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 import { tokenize } from './lexer.js';
 import { parse }    from './parser.js';
@@ -27,7 +27,8 @@ async function tryImport(relPath) {
   const abs = path.join(__dirname, relPath);
   if (!fs.existsSync(abs)) return null;
   try {
-    return await import(abs);
+    // En Windows import() requiere una URL file://, no una ruta absoluta 'C:\...'.
+    return await import(pathToFileURL(abs).href);
   } catch (e) {
     warn(`No se pudo cargar el generador "${relPath}": ${e.message}`);
     return null;
