@@ -3,61 +3,75 @@ import protoLoader from "@grpc/proto-loader";
 import path from "path";
 import net from "net";
 import { fileURLToPath } from "url";
-import Calculadora from "./Calculadora.js";
+
+// ── Point to compiler output ─────────────────────────
+import BO from "../output/Calculadora.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PROTO_PATH = path.join(__dirname, "../output/calculadora.proto");
 
-// ─── gRPC ───────────────────────────────────────────
-const packageDefinition = protoLoader.loadSync(path.join(__dirname, "../proto/calculadora.proto"));
-const proto = grpc.loadPackageDefinition(packageDefinition).calculadora;
+// ── Load proto & resolve service dynamically ─────────
+const packageDefinition = protoLoader.loadSync(PROTO_PATH);
+const pkg  = grpc.loadPackageDefinition(packageDefinition);
 
-const obj = new Calculadora();
+// Find the first package that has a service (no hardcoded package name)
+const pkgName = Object.keys(pkg).find(k =>
+  Object.values(pkg[k]).some(v => v?.service)
+);
+const proto = pkg[pkgName];
+
+// Find the service class inside that package
+const serviceName = Object.keys(proto).find(k => proto[k]?.service);
+
+// ── Instantiate BO & build handler map dynamically ───
+const obj = new BO();
 
 function handler(methodName) {
-    return (call, callback) => {
-        const { a, b } = call.request;
-        const resultado = obj[methodName](a, b);
-        callback(null, { valor: resultado });
-    };
+  return (call, callback) => {
+    const params = Object.values(call.request);
+    const resultado = obj[methodName](...params);
+    callback(null, { valor: resultado });
+  };
 }
 
-const grpcServer = new grpc.Server();
+// Reflect on BO methods — no hardcoded method names
+const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(obj))
+  .filter(m => m !== "constructor");
 
-grpcServer.addService(proto.Calculadora.service, {
-    add: handler("add"),
-    sub: handler("sub"),
-    mul: handler("mul"),
-    div: handler("div"),
-});
-
-grpcServer.bindAsync(
-    "0.0.0.0:50051",
-    grpc.ServerCredentials.createInsecure(),
-    (err, port) => {
-        if (err) throw err;
-        console.log(`gRPC escuchando en puerto ${port}`);
-    }
+const serviceImpl = Object.fromEntries(
+  methodNames.map(m => [m, handler(m)])
 );
 
-// ─── Socket JSON ─────────────────────────────────────
+// ── gRPC server ───────────────────────────────────────
+const grpcServer = new grpc.Server();
+grpcServer.addService(proto[serviceName].service, serviceImpl);
+
+grpcServer.bindAsync(
+  "0.0.0.0:50051",
+  grpc.ServerCredentials.createInsecure(),
+  (err, port) => {
+    if (err) throw err;
+    console.log(`gRPC escuchando en puerto ${port}`);
+  }
+);
+
+// ── Socket JSON server ────────────────────────────────
 const socketServer = net.createServer((socket) => {
-    console.log("Cliente socket conectado");
+  console.log("Cliente socket conectado");
 
-    socket.on("data", (data) => {
-        try {
-            const { objeto, metodo, params } = JSON.parse(data.toString());
-            const resultado = obj[metodo](...params);
-            socket.write(JSON.stringify({ resultado }));
-        } catch (err) {
-            socket.write(JSON.stringify({ error: err.message }));
-        }
-    });
+  socket.on("data", (data) => {
+    try {
+      const { metodo, params } = JSON.parse(data.toString());
+      const resultado = obj[metodo](...params);
+      socket.write(JSON.stringify({ resultado }));
+    } catch (err) {
+      socket.write(JSON.stringify({ error: err.message }));
+    }
+  });
 
-    socket.on("end", () => {
-        console.log("Cliente socket desconectado");
-    });
+  socket.on("end", () => console.log("Cliente socket desconectado"));
 });
 
 socketServer.listen(50052, () => {
-    console.log("Socket JSON escuchando en puerto 50052");
+  console.log("Socket JSON escuchando en puerto 50052");
 });

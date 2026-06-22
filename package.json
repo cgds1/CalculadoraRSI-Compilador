@@ -6,7 +6,7 @@
   "scripts": {
     "compile": "node compiler/compiler.js calculadora.dcl",
     "server": "node server/ServerRSI.js",
-    "client": "node client/cliente.js",
+    "client": "node run-client.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
