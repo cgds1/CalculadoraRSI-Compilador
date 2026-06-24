@@ -97,28 +97,15 @@ async function main() {
     log('Directorio output/ creado');
   }
 
-  const protocol   = ast.protocol;
-  const svcName    = ast.name.replace('Service', '').toLowerCase(); // e.g. 'calculadora'
-  const className  = ast.classes[0].name;                           // e.g. 'Calculadora'
+  const className = ast.classes[0].name;   // e.g. 'Calculadora'
 
-  // Generadores del compilador. Cada entrada: [módulo, export, archivo de salida].
-  const GEN = {
-    proto:       ['./generator/proto.js',       'generateProto',       `${svcName}.proto`],
-    bo:          ['./generator/bo.js',          'generateBO',          `${className}.js`],
-    proxyGRPC:   ['./generator/proxyGRPC.js',   'generateProxyGRPC',   `${className}ProxyGRPC.js`],
-    proxySocket: ['./generator/proxySocket.js', 'generateProxySocket', `${className}ProxySocket.js`],
-    client:      ['./generator/client.js',      'generateClient',      `Cliente${className}.js`],
-  };
-
-  let selectedGenerators;
-  if (protocol === 'grpc') {
-    selectedGenerators = [GEN.proto, GEN.bo, GEN.proxyGRPC, GEN.client];
-  } else if (protocol === 'socket') {
-    selectedGenerators = [GEN.bo, GEN.proxySocket, GEN.client];
-  } else {
-    // 'both' — los 5 artefactos
-    selectedGenerators = [GEN.proto, GEN.bo, GEN.proxyGRPC, GEN.proxySocket, GEN.client];
-  }
+  // Generadores del compilador (transporte: Socket JSON).
+  // Cada entrada: [módulo, export, archivo de salida].
+  const selectedGenerators = [
+    ['./generator/bo.js',          'generateBO',          `${className}.js`],
+    ['./generator/proxySocket.js', 'generateProxySocket', `${className}ProxySocket.js`],
+    ['./generator/client.js',      'generateClient',      `Cliente${className}.js`],
+  ];
 
   let generatorsRun = 0;
   for (const [modPath, exportName, outFile] of selectedGenerators) {

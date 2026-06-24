@@ -73,7 +73,20 @@ export function parse(tokens) {
             returnType = parseTypeName();
         }
 
-        return { type: "Method", name, params, returnType, line: lineToken.line };
+        // Cuerpo opcional del método: `=> expresión`. Se captura como texto crudo
+        // (secuencia de tokens hasta el siguiente método o el cierre de la clase).
+        // Sin cuerpo, el generador deja un esqueleto para implementar a mano.
+        let body = null;
+        if (isSymbol("=>")) {
+            next();
+            const exprTokens = [];
+            while (!isKeyword("method") && !isSymbol("}") && peek().type !== "eof") {
+                exprTokens.push(next().value);
+            }
+            body = exprTokens.join(" ");
+        }
+
+        return { type: "Method", name, params, returnType, body, line: lineToken.line };
     }
 
     function parseClass() {
@@ -120,7 +133,7 @@ export function parse(tokens) {
             } else if (isKeyword("protocol")) {
                 next();
                 expect("symbol", ":");
-                // El valor del protocolo llega como identifier (grpc/socket/both).
+                // El valor del protocolo llega como identifier (socket).
                 protocol = parseTypeName();
             } else if (isKeyword("class")) {
                 classes.push(parseClass());

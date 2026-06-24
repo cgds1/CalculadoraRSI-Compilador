@@ -1,63 +1,37 @@
-import grpc from "@grpc/grpc-js";
-import protoLoader from "@grpc/proto-loader";
-import path from "path";
 import net from "net";
-import { fileURLToPath } from "url";
-import Calculadora from "./Calculadora.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// ── Usa el Business Object generado por el compilador ─
+import BO from "../output/Calculadora.js";
 
-// ─── gRPC ───────────────────────────────────────────
-const packageDefinition = protoLoader.loadSync(path.join(__dirname, "../proto/calculadora.proto"));
-const proto = grpc.loadPackageDefinition(packageDefinition).calculadora;
+const obj = new BO();
+const PORT = 50052;
 
-const obj = new Calculadora();
-
-function handler(methodName) {
-    return (call, callback) => {
-        const { a, b } = call.request;
-        const resultado = obj[methodName](a, b);
-        callback(null, { valor: resultado });
-    };
-}
-
-const grpcServer = new grpc.Server();
-
-grpcServer.addService(proto.Calculadora.service, {
-    add: handler("add"),
-    sub: handler("sub"),
-    mul: handler("mul"),
-    div: handler("div"),
-});
-
-grpcServer.bindAsync(
-    "0.0.0.0:50051",
-    grpc.ServerCredentials.createInsecure(),
-    (err, port) => {
-        if (err) throw err;
-        console.log(`gRPC escuchando en puerto ${port}`);
-    }
-);
-
-// ─── Socket JSON ─────────────────────────────────────
+// ── Servidor Socket JSON ──────────────────────────────
+// Protocolo: el cliente envía { objeto, metodo, params } y recibe
+// { resultado } o { error }. El método se despacha dinámicamente sobre el BO.
 const socketServer = net.createServer((socket) => {
-    console.log("Cliente socket conectado");
+    const cliente = `${socket.remoteAddress}:${socket.remotePort}`;
+    console.log(`[+] Cliente conectado: ${cliente}`);
 
     socket.on("data", (data) => {
+        const raw = data.toString();
         try {
-            const { objeto, metodo, params } = JSON.parse(data.toString());
+            const { metodo, params } = JSON.parse(raw);
             const resultado = obj[metodo](...params);
+            console.log(`[>] ${cliente} ${metodo}(${(params ?? []).join(", ")}) = ${resultado}`);
             socket.write(JSON.stringify({ resultado }));
         } catch (err) {
+            console.log(`[!] ${cliente} mensaje inválido (${raw}): ${err.message}`);
             socket.write(JSON.stringify({ error: err.message }));
         }
     });
 
-    socket.on("end", () => {
-        console.log("Cliente socket desconectado");
-    });
+    socket.on("end", () => console.log(`[-] Cliente desconectado: ${cliente}`));
+    // Evita que un cierre abrupto del cliente (ECONNRESET) tumbe el server.
+    socket.on("error", (err) => console.log(`[!] ${cliente} socket error: ${err.code}`));
 });
 
-socketServer.listen(50052, () => {
-    console.log("Socket JSON escuchando en puerto 50052");
+socketServer.listen(PORT, () => {
+    console.log(`[OK] Servidor Socket JSON escuchando en 0.0.0.0:${PORT}`);
+    console.log(`     Esperando conexiones de clientes...`);
 });
