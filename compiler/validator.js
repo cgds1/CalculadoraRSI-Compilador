@@ -6,7 +6,7 @@
  *        const { errors, warnings } = validate(ast);
  */
 
-const VALID_PROTOCOLS = new Set(['grpc', 'socket', 'both']);
+const VALID_PROTOCOLS = new Set(['socket']);
 const VALID_TYPES     = new Set(['float', 'int', 'string', 'bool']);
 const PORT_MIN = 1;
 const PORT_MAX = 65535;
@@ -48,7 +48,7 @@ export function validate(ast) {
     errors.push(err('Missing required service field: protocol'));
   } else if (!VALID_PROTOCOLS.has(ast.protocol)) {
     errors.push(err(
-      `Invalid protocol "${ast.protocol}". Allowed values: grpc, socket, both`
+      `Invalid protocol "${ast.protocol}". Allowed values: socket`
     ));
   }
 

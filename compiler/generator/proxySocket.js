@@ -1,12 +1,12 @@
 /**
  * compiler/generator/proxySocket.js
  * Generates the Socket JSON proxy ESM class from the DCL AST.
- * Socket port = gRPC port + 1 (e.g. 50051 → 50052), matching ServerRSI.js.
+ * Puerto del socket tomado directamente del .dcl (coincide con ServerRSI.js).
  */
 
 export function generateProxySocket(ast) {
   const cls = ast.classes[0];
-  const socketPort = ast.port + 1;
+  const socketPort = ast.port;
 
   const methods = cls.methods.map(m => {
     const params = m.params.map(p => p.name).join(', ');

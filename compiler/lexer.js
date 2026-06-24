@@ -5,10 +5,10 @@
 
 const KEYWORDS = new Set(["service", "host", "port", "protocol", "class", "method"]);
 const TYPES = new Set(["float", "int", "string", "bool"]);
-const SYMBOLS = new Set(["{", "}", "(", ")", ":", ","]);
+const SYMBOLS = new Set(["{", "}", "(", ")", ":", ",", "+", "-", "*", "/"]);
 
-// Los valores de protocol (grpc | socket | both) se emiten como identifier;
-// es el parser/validator quien los interpreta en su contexto.
+// El valor de protocol (socket) se emite como identifier;
+// es el parser/validator quien lo interpreta en su contexto.
 
 function isIdentifierStart(ch) {
     return /[A-Za-z_]/.test(ch);
@@ -47,6 +47,13 @@ export function tokenize(source) {
         // Comentarios de línea: // ... hasta el fin de línea.
         if (ch === "/" && source[i + 1] === "/") {
             while (i < len && source[i] !== "\n") i++;
+            continue;
+        }
+
+        // Flecha del cuerpo de un método: `=> expresión`.
+        if (ch === "=" && source[i + 1] === ">") {
+            tokens.push({ type: "symbol", value: "=>", line });
+            i += 2;
             continue;
         }
 

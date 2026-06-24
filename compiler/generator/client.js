@@ -1,20 +1,14 @@
 /**
  * compiler/generator/client.js
  * Generates an interactive console client from the DCL AST.
- * Uses gRPC proxy by default; socket proxy when protocol === 'socket'.
+ * Uses the generated Socket JSON proxy.
  */
 
 export function generateClient(ast) {
   const cls = ast.classes[0];
-  const protocol = ast.protocol;
 
-  const useSocket = protocol === 'socket';
-  const proxyFile = useSocket
-    ? `./${cls.name}ProxySocket.js`
-    : `./${cls.name}ProxyGRPC.js`;
-  const proxyClass = useSocket
-    ? `${cls.name}ProxySocket`
-    : `${cls.name}ProxyGRPC`;
+  const proxyFile = `./${cls.name}ProxySocket.js`;
+  const proxyClass = `${cls.name}ProxySocket`;
 
   // Menu display lines
   const menuLines = cls.methods
